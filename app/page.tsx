@@ -188,8 +188,8 @@ function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: 
         style={{
           /* Zoom in ~15% to crop out the chrome tab bar at top */
           top: "-12%",
-          left: "-4%",
-          width: "108%",
+          left: "-8%",
+          width: "116%",
           height: "124%",
           objectFit: "cover",
         }}
