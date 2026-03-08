@@ -556,9 +556,9 @@ export default function Dashboard() {
           <a href="https://x.com/SlitherNeuron" target="_blank" rel="noopener"
             className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
             style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>𝕏</a>
-          <a href="https://axiom.trade" target="_blank" rel="noopener"
+          <a href="https://pump.fun/coin/8oPEf5mStz1Q54v1eyWUFWPZLTk8Qb3kFV6Tj6pWpump" target="_blank" rel="noopener"
             className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
-            style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>CA: TBA</a>
+            style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>$NEURON</a>
         </div>
       </div>
 
@@ -714,10 +714,10 @@ export default function Dashboard() {
                 style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>
                 Follow on 𝕏
               </a>
-              <a href="https://axiom.trade" target="_blank" rel="noopener"
+              <a href="https://pump.fun/coin/8oPEf5mStz1Q54v1eyWUFWPZLTk8Qb3kFV6Tj6pWpump" target="_blank" rel="noopener"
                 className="text-[11px] uppercase tracking-[0.15em] px-5 py-2.5 border rounded-sm transition-colors"
                 style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>
-                Support us on Solana · CA: TBA
+                $NEURON
               </a>
             </div>
           </div>
