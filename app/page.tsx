@@ -334,8 +334,15 @@ function seededRandom(tick: number, channel: number): number {
 
 /* Get state for a given tick (deterministic, synced to video loop) */
 function getStateForTick(tick: number): GameState {
+  // Compute what the video time would be at this tick
+  // Video starts at (startWallTime % VIDEO_DURATION), ticks advance from there
   const videoTime = (tick * DT) % VIDEO_DURATION;
   return getStateAtTime(videoTime);
+}
+
+/* Get state from actual video currentTime (used for live ticking) */
+function getStateFromVideoTime(vt: number): GameState {
+  return getStateAtTime(vt % VIDEO_DURATION);
 }
 
 /* Generate deterministic spikes for a tick */
@@ -428,10 +435,34 @@ export default function Dashboard() {
     setPopRate(sum);
     setPeakCh({ ch: peakIdx, rate: peak });
 
-    // Continue ticking forward
+    // Continue ticking forward — use actual video time for state
     const iv = setInterval(() => {
       const tick = tickRef.current++;
-      const { spikes, reward } = getSpikesForTick(tick);
+      // Use actual video currentTime for state lookup so it stays perfectly synced
+      const vt = videoTime.current;
+      const gs = getStateFromVideoTime(vt);
+
+      // Generate spikes for this state (deterministic from tick for consistency)
+      let effectiveGs = gs;
+      if (gs === "death") {
+        const deathStart = TIMELINE.filter(e => e.state === "death" && e.t <= (vt % VIDEO_DURATION)).pop();
+        if (deathStart && (vt % VIDEO_DURATION) - deathStart.t > 0.2) effectiveGs = "idle";
+      }
+      const rates = new Float64Array(CH);
+      const baseRates = getChannelRates(effectiveGs);
+      for (let i = 0; i < CH; i++) rates[i] = baseRates[i] * (0.5 + seededRandom(tick, i));
+      const spikes = new Uint8Array(CH);
+      for (let i = 0; i < CH; i++) {
+        const lambda = rates[i] * DT;
+        let k = 0, p = Math.exp(-lambda), s = p;
+        const u = seededRandom(tick * 3 + 1, i);
+        while (u > s && k < 10) { k++; p *= lambda / k; s += p; }
+        spikes[i] = k;
+      }
+      const rewardBase: Record<GameState, number> = {
+        idle: -0.005, eating: 0.45, hunting: 0.08, evading: -0.25, boosting: 0.04, death: -0.8,
+      };
+      const reward = (rewardBase[effectiveGs] || 0) * (0.7 + seededRandom(tick * 7, 0) * 0.6);
 
       const sr = smoothRatesRef.current;
       for (let i = 0; i < CH; i++) {
