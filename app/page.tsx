@@ -239,88 +239,152 @@ function Metric({ label, value, color }: { label: string; value: string; color?:
   );
 }
 
+/* ═══ SEEDED PRNG (deterministic from tick number) ═══ */
+function mulberry32(seed: number) {
+  let t = (seed + 0x6D2B79F5) | 0;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
+function seededRandom(tick: number, channel: number): number {
+  return mulberry32(tick * 64 + channel);
+}
+
+/* Get state for a given tick (deterministic) */
+function getStateForTick(tick: number): GameState {
+  const cycle = Math.floor(tick / 240); // new state every ~6s (240 ticks at 40fps)
+  const seed = Math.sin(cycle * 9301 + 4927) * 10000;
+  const r = seed - Math.floor(seed);
+  if (r < 0.10) return "idle";
+  if (r < 0.35) return "eating";
+  if (r < 0.65) return "hunting";
+  if (r < 0.85) return "evading";
+  if (r < 0.95) return "boosting";
+  return "death";
+}
+
+/* Generate deterministic spikes for a tick */
+function getSpikesForTick(tick: number): { spikes: Uint8Array; rates: Float64Array; reward: number } {
+  let gs = getStateForTick(tick);
+  // Death → after 8 ticks, go silent
+  if (gs === "death") {
+    const deathStart = Math.floor(tick / 240) * 240;
+    if (tick - deathStart > 8) gs = "idle";
+  }
+
+  const rates = new Float64Array(CH);
+  const baseRates = getChannelRates(gs);
+  // Use seeded random to make rates deterministic
+  for (let i = 0; i < CH; i++) {
+    rates[i] = baseRates[i] * (0.5 + seededRandom(tick, i));
+  }
+
+  const spikes = new Uint8Array(CH);
+  for (let i = 0; i < CH; i++) {
+    const lambda = rates[i] * DT;
+    let k = 0, p = Math.exp(-lambda), s = p;
+    const u = seededRandom(tick * 3 + 1, i);
+    while (u > s && k < 10) { k++; p *= lambda / k; s += p; }
+    spikes[i] = k;
+  }
+
+  const rewardBase: Record<GameState, number> = {
+    idle: -0.005, eating: 0.45, hunting: 0.08, evading: -0.25, boosting: 0.04, death: -0.8,
+  };
+  const reward = (rewardBase[gs] || 0) * (0.7 + seededRandom(tick * 7, 0) * 0.6);
+
+  return { spikes, rates, reward };
+}
+
 /* ═══ MAIN ═══ */
 export default function Dashboard() {
   const videoTime = useRef(0);
-  const [state, setState] = useState<GameState>("idle");
+  const handleTime = useCallback((t: number) => { videoTime.current = t; }, []);
+
+  // All state computed from wall clock
+  const tickRef = useRef(0);
+  const smoothRatesRef = useRef(new Float64Array(CH));
+
   const [smoothRates, setSmoothRates] = useState(() => new Float64Array(CH));
   const [spikeHistory, setSpikeHistory] = useState<Uint8Array[]>([]);
   const [rewards, setRewards] = useState<number[]>([]);
   const [totalReward, setTotalReward] = useState(0);
-  const [episode, setEpisode] = useState(1);
   const [meanFR, setMeanFR] = useState(0);
   const [popRate, setPopRate] = useState(0);
   const [peakCh, setPeakCh] = useState({ ch: 0, rate: 0 });
   const [latency, setLatency] = useState(12);
-  const prevState = useRef<GameState>("idle");
-  const deathTick = useRef(0);
 
-  const handleTime = useCallback((t: number) => { videoTime.current = t; }, []);
-
-  // Independent neural simulation at 40fps
+  // On mount: backfill history so it looks like it's been running
   useEffect(() => {
-    const iv = setInterval(() => {
-      const t = videoTime.current;
-      let gs = getCurrentState();
+    const nowTick = Math.floor(Date.now() / (DT * 1000));
+    const historyLen = 600;
+    const startTick = nowTick - historyLen;
 
-      // Death → after ~200ms (8 ticks), drop to near-silence
-      if (gs === "death") {
-        if (prevState.current !== "death") { deathTick.current = 0; setEpisode(e => e + 1); }
-        deathTick.current++;
-        // After burst phase, simulate post-death silence
-        if (deathTick.current > 8) gs = "idle"; // will use idle rates (very low)
+    const backSpikes: Uint8Array[] = [];
+    const backRewards: number[] = [];
+    let backTotal = 0;
+    const sr = new Float64Array(CH);
+
+    for (let t = startTick; t < nowTick; t++) {
+      const { spikes, rates, reward } = getSpikesForTick(t);
+      backSpikes.push(spikes);
+      backRewards.push(reward);
+      backTotal += reward * DT;
+      for (let i = 0; i < CH; i++) {
+        const instRate = spikes[i] / DT;
+        sr[i] = sr[i] * (1 - RATE_SMOOTH) + instRate * RATE_SMOOTH;
       }
-      prevState.current = getCurrentState();
+    }
 
-      const instantRates = getChannelRates(gs);
-      const spikes = generateSpikes(instantRates);
+    tickRef.current = nowTick;
+    smoothRatesRef.current = sr;
+    setSmoothRates(new Float64Array(sr));
+    setSpikeHistory(backSpikes);
+    setRewards(backRewards);
+    setTotalReward(backTotal);
 
-      // Exponential smoothing on displayed rates
-      setSmoothRates(prev => {
-        const next = new Float64Array(CH);
-        for (let i = 0; i < CH; i++) {
-          // Convert spike count this tick to instantaneous rate
-          const instRate = spikes[i] / DT;
-          next[i] = prev[i] * (1 - RATE_SMOOTH) + instRate * RATE_SMOOTH;
-        }
-        return next;
-      });
+    // Compute initial metrics
+    let sum = 0, peak = 0, peakIdx = 0;
+    for (let i = 0; i < CH; i++) {
+      sum += sr[i];
+      if (sr[i] > peak) { peak = sr[i]; peakIdx = i; }
+    }
+    setMeanFR(sum / CH);
+    setPopRate(sum);
+    setPeakCh({ ch: peakIdx, rate: peak });
+
+    // Continue ticking forward
+    const iv = setInterval(() => {
+      const tick = tickRef.current++;
+      const { spikes, reward } = getSpikesForTick(tick);
+
+      const sr = smoothRatesRef.current;
+      for (let i = 0; i < CH; i++) {
+        const instRate = spikes[i] / DT;
+        sr[i] = sr[i] * (1 - RATE_SMOOTH) + instRate * RATE_SMOOTH;
+      }
+      smoothRatesRef.current = sr;
+      setSmoothRates(new Float64Array(sr));
 
       setSpikeHistory(h => { const n = [...h, spikes]; return n.length > 600 ? n.slice(-600) : n; });
+      setRewards(r => { const n = [...r, reward]; return n.length > 600 ? n.slice(-600) : n; });
+      setTotalReward(tr => tr + reward * DT);
 
-      // Compute metrics from smoothed rates
-      setSmoothRates(prev => {
-        let sum = 0, peak = 0, peakIdx = 0;
-        for (let i = 0; i < CH; i++) {
-          sum += prev[i];
-          if (prev[i] > peak) { peak = prev[i]; peakIdx = i; }
-        }
-        setMeanFR(sum / CH);
-        setPopRate(sum);
-        setPeakCh({ ch: peakIdx, rate: peak });
-        return prev;
-      });
-
-      // Reward signal
-      const rewardMap: Record<GameState, number> = {
-        idle: -0.01 + Math.random() * 0.02,
-        eating: 0.3 + Math.random() * 0.4,
-        hunting: 0.05 + Math.random() * 0.1,
-        evading: -0.15 - Math.random() * 0.2,
-        boosting: 0.02 + Math.random() * 0.05,
-        death: -0.8,
-      };
-      const rw = rewardMap[gs] || 0;
-      setRewards(r => { const n = [...r, rw]; return n.length > 600 ? n.slice(-600) : n; });
-      setTotalReward(tr => tr + rw * DT);
-      setLatency(10 + Math.floor(Math.random() * 8));
-      setState(getCurrentState());
+      let sum = 0, peak = 0, peakIdx = 0;
+      for (let i = 0; i < CH; i++) {
+        sum += sr[i];
+        if (sr[i] > peak) { peak = sr[i]; peakIdx = i; }
+      }
+      setMeanFR(sum / CH);
+      setPopRate(sum);
+      setPeakCh({ ch: peakIdx, rate: peak });
+      setLatency(10 + Math.floor(mulberry32(tick * 99) * 8));
     }, DT * 1000);
 
     return () => clearInterval(iv);
   }, []);
 
-  const stateColor = state === "death" ? "var(--warn)" : "var(--accent)";
   const rewardColor = totalReward >= 0 ? "var(--accent)" : "var(--warn)";
 
   return (
@@ -374,7 +438,7 @@ export default function Dashboard() {
                   </div>
                 ))}
                 <div className="flex items-center gap-2">
-                  <span className={`led ${state === "death" ? "off" : "on"}`} />
+                  <span className="led on" />
                   <span style={{ fontSize: 6, letterSpacing: "0.15em", color: "var(--device-label)", textTransform: "uppercase" }}>Bio</span>
                 </div>
               </div>
