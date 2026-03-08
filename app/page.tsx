@@ -465,25 +465,23 @@ export default function Dashboard() {
     <div className="h-screen flex flex-col" style={{ background: "var(--bg)" }}>
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-5 py-2.5"
+      <div className="flex items-center justify-between px-3 md:px-5 py-2"
         style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-warm)" }}>
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: "var(--text)" }}>
-            slither-neuron
-          </span>
-          <span className="text-[9px]" style={{ color: "var(--muted)" }}>CL1 Cloud · Live Training</span>
+        <div className="flex items-center gap-2 md:gap-3">
+          <img src="/logo.png" alt="slither-neuron" className="h-6 md:h-7" />
+          <span className="hidden md:inline text-[9px]" style={{ color: "var(--muted)" }}>CL1 Cloud · Live Training</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           <div className="flex items-center gap-1.5">
             <span className="status-dot live" />
             <span className="text-[9px]" style={{ color: "var(--accent)" }}>Connected</span>
           </div>
-          <span className="num text-[9px]" style={{ color: "var(--muted)" }}>64ch · 40kHz · {latency}ms</span>
+          <span className="hidden md:inline num text-[9px]" style={{ color: "var(--muted)" }}>64ch · 40kHz · {latency}ms</span>
           <a href="https://github.com/FixdIt0/slither-neuron" target="_blank" rel="noopener"
-            className="text-[8px] uppercase tracking-[0.1em] px-2.5 py-1 border rounded-sm"
+            className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
             style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>Source</a>
           <a href="https://axiom.trade" target="_blank" rel="noopener"
-            className="text-[8px] uppercase tracking-[0.1em] px-2.5 py-1 border rounded-sm"
+            className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
             style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>CA: TBA</a>
         </div>
       </div>
@@ -493,10 +491,10 @@ export default function Dashboard() {
         <div className="max-w-[1200px] mx-auto px-4 py-6">
 
           {/* CENTER ROW: left metrics | DEVICE | right metrics */}
-          <div className="flex items-stretch gap-4 justify-center">
+          <div className="flex flex-col md:flex-row items-stretch gap-4 justify-center">
 
-            {/* Left metrics */}
-            <div className="w-[140px] shrink-0 flex flex-col justify-center py-4">
+            {/* Side metrics - horizontal on mobile, vertical columns on desktop */}
+            <div className="flex md:flex-col md:w-[140px] justify-around md:justify-center gap-2 md:gap-0 py-2 md:py-4 order-2 md:order-1">
               <Metric label="Uptime" value={(() => { const s = Math.floor((Date.now() / 1000) % 86400); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); return `${h}h ${m}m`; })()} />
               <Metric label="DIV" value="14" color="var(--accent)" />
               <Metric label="Mean FR" value={`${meanFR.toFixed(1)} Hz`} />
@@ -504,7 +502,7 @@ export default function Dashboard() {
             </div>
 
             {/* THE DEVICE */}
-            <div className="device device-screws-bottom relative" style={{ width: 560 }}>
+            <div className="device device-screws-bottom relative w-full md:w-[560px] order-1 md:order-2">
               <div className="device-label">
                 <div className="device-label-plate"><span>Cortical Labs</span></div>
                 <div className="device-model">CL1-MEA · 64ch Biological Compute Unit</div>
@@ -545,8 +543,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Right metrics */}
-            <div className="w-[140px] shrink-0 flex flex-col justify-center py-4">
+            {/* Right metrics - horizontal on mobile, vertical on desktop */}
+            <div className="flex md:flex-col md:w-[140px] justify-around md:justify-center gap-2 md:gap-0 py-2 md:py-4 order-3">
               <Metric label="Reward" value={totalReward.toFixed(3)} color={rewardColor} />
               <Metric label="Peak Ch" value={`ch.${peakCh.ch} · ${Math.round(peakCh.rate)} Hz`} />
               <Metric label="Latency" value={`${latency}ms`} />
@@ -555,7 +553,7 @@ export default function Dashboard() {
           </div>
 
           {/* BOTTOM ROW: wide panels */}
-          <div className="grid grid-cols-[200px_1fr_1fr] gap-3 mt-5">
+          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr_1fr] gap-3 mt-5">
             <div className="panel flex flex-col">
               <div className="panel-header">
                 <span>Electrodes · 8×8</span>
