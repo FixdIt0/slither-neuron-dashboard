@@ -535,7 +535,7 @@ export default function Dashboard() {
             <span className="text-[9px]" style={{ color: "var(--accent)" }}>Connected</span>
           </div>
           <span className="hidden md:inline num text-[9px]" style={{ color: "var(--muted)" }}>64ch · 40kHz · {latency}ms</span>
-          <a href="https://github.com/FixdIt0/slither-neuron" target="_blank" rel="noopener"
+          <a href="https://github.com/MoonBagDexter/slither-neuron" target="_blank" rel="noopener"
             className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
             style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>Source</a>
           <a href="https://axiom.trade" target="_blank" rel="noopener"
@@ -686,7 +686,7 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center justify-center gap-6 mt-8">
-              <a href="https://github.com/FixdIt0/slither-neuron" target="_blank" rel="noopener"
+              <a href="https://github.com/MoonBagDexter/slither-neuron" target="_blank" rel="noopener"
                 className="text-[11px] uppercase tracking-[0.15em] px-5 py-2.5 border rounded-sm transition-colors"
                 style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>
                 View the Source Code
