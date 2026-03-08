@@ -271,19 +271,10 @@ function RewardGraph({ rewards }: { rewards: number[] }) {
 function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: (t: number) => void }) {
   const vidRef = useRef<HTMLVideoElement>(null);
   const [buffering, setBuffering] = useState(false);
-  const blobUrl = useRef<string | null>(null);
 
   useEffect(() => {
     const vid = vidRef.current;
     if (!vid) return;
-
-    // Load as blob to hide source in DOM
-    fetch(videoSrc).then(r => r.blob()).then(blob => {
-      blobUrl.current = URL.createObjectURL(blob);
-      vid.src = blobUrl.current;
-      vid.load();
-    });
-
     const onTime = () => onTimeUpdate(vid.currentTime);
     vid.addEventListener("timeupdate", onTime);
     vid.addEventListener("loadedmetadata", () => {
@@ -300,7 +291,6 @@ function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: 
     return () => {
       vid.removeEventListener("timeupdate", onTime);
       vid.removeEventListener("timeupdate", checkLoop);
-      if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
     };
   }, [videoSrc, onTimeUpdate]);
 
@@ -308,6 +298,8 @@ function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: 
     <div style={{ position: "relative", width: "100%", paddingBottom: "62.5%", overflow: "hidden", background: "#000" }}>
       <video
         ref={vidRef}
+        src={videoSrc}
+        preload="auto"
         loop muted playsInline autoPlay
         data-stream-type="webrtc-relay"
         data-codec="h264-baseline"
@@ -544,6 +536,11 @@ export default function Dashboard() {
           <img src="/logo.png" alt="slither-neuron" className="h-6 md:h-7" />
           <span className="hidden md:inline text-[9px]" style={{ color: "var(--muted)" }}>CL1 Cloud · Live Training</span>
         </div>
+        <a href="https://pump.fun/coin/8oPEf5mStz1Q54v1eyWUFWPZLTk8Qb3kFV6Tj6pWpump" target="_blank" rel="noopener"
+          className="num text-[7px] md:text-[9px] px-2 py-1 border rounded-sm truncate max-w-[180px] md:max-w-none"
+          style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>
+          CA: 8oPEf5mStz1Q54v1eyWUFWPZLTk8Qb3kFV6Tj6pWpump
+        </a>
         <div className="flex items-center gap-2 md:gap-4">
           <div className="flex items-center gap-1.5">
             <span className="status-dot live" />
@@ -556,9 +553,6 @@ export default function Dashboard() {
           <a href="https://x.com/SlitherNeuron" target="_blank" rel="noopener"
             className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
             style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>𝕏</a>
-          <a href="https://pump.fun/coin/8oPEf5mStz1Q54v1eyWUFWPZLTk8Qb3kFV6Tj6pWpump" target="_blank" rel="noopener"
-            className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
-            style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>$NEURON</a>
         </div>
       </div>
 
@@ -717,7 +711,7 @@ export default function Dashboard() {
               <a href="https://pump.fun/coin/8oPEf5mStz1Q54v1eyWUFWPZLTk8Qb3kFV6Tj6pWpump" target="_blank" rel="noopener"
                 className="text-[11px] uppercase tracking-[0.15em] px-5 py-2.5 border rounded-sm transition-colors"
                 style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>
-                $NEURON
+                CA: 8oPEf5mStz1Q54v1eyWUFWPZLTk8Qb3kFV6Tj6pWpump
               </a>
             </div>
           </div>
