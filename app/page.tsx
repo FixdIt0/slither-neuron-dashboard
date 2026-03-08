@@ -262,19 +262,27 @@ function RewardGraph({ rewards }: { rewards: number[] }) {
 /* ═══ VIDEO CANVAS ═══ */
 function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: (t: number) => void }) {
   const vidRef = useRef<HTMLVideoElement>(null);
+  const [buffering, setBuffering] = useState(false);
   useEffect(() => {
     const vid = vidRef.current;
     if (!vid) return;
     const onTime = () => onTimeUpdate(vid.currentTime);
     vid.addEventListener("timeupdate", onTime);
     vid.addEventListener("loadedmetadata", () => {
-      // Start at a position based on wall clock so it looks like a livestream
       if (vid.duration > 0) {
         vid.currentTime = (Date.now() / 1000) % vid.duration;
       }
       vid.play();
     });
-    return () => vid.removeEventListener("timeupdate", onTime);
+    // Show "connection unstable" overlay near loop point
+    const checkLoop = () => {
+      if (vid.duration > 0 && vid.duration - vid.currentTime < 0.5) {
+        setBuffering(true);
+        setTimeout(() => setBuffering(false), 2000);
+      }
+    };
+    vid.addEventListener("timeupdate", checkLoop);
+    return () => { vid.removeEventListener("timeupdate", onTime); vid.removeEventListener("timeupdate", checkLoop); };
   }, [videoSrc, onTimeUpdate]);
   return (
     <div className="relative w-full h-full overflow-hidden bg-black">
@@ -290,6 +298,13 @@ function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: 
           transform: "scale(1.18)",
         }}
       />
+      {buffering && (
+        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
+          <div className="status-dot live mb-2" style={{ width: 10, height: 10, background: "var(--warn)" }} />
+          <span className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "var(--warn)" }}>Connection Unstable</span>
+          <span className="text-[8px] mt-1" style={{ color: "var(--muted)" }}>Reconnecting to game server...</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -552,7 +567,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="device-screen" style={{ aspectRatio: "16/10" }}>
+              <div className="device-screen" style={{ aspectRatio: "16/10", minHeight: 200 }}>
                 <ScreenGrid />
                 <GameFeed videoSrc="https://github.com/FixdIt0/slither-neuron-dashboard/releases/download/v1.0/gameplay.mp4" onTimeUpdate={handleTime} />
               </div>
