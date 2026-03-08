@@ -580,7 +580,7 @@ export default function Dashboard() {
               </div>
 
               <div className="device-screen" style={{ width: "100%" }}>
-                <GameFeed videoSrc="https://github.com/FixdIt0/slither-neuron-dashboard/releases/download/v1.0/gameplay.mp4" onTimeUpdate={handleTime} />
+                <GameFeed videoSrc="/api/video" onTimeUpdate={handleTime} />
               </div>
 
               <div className="hidden md:flex device-controls">
