@@ -293,14 +293,16 @@ function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: 
     return () => { vid.removeEventListener("timeupdate", onTime); vid.removeEventListener("timeupdate", checkLoop); };
   }, [videoSrc, onTimeUpdate]);
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", background: "#000" }}>
+    <div style={{ position: "relative", width: "100%", paddingBottom: "62.5%", overflow: "hidden", background: "#000" }}>
       <video
         ref={vidRef}
         src={videoSrc}
         loop muted playsInline
         autoPlay
         style={{
-          display: "block",
+          position: "absolute",
+          top: 0,
+          left: 0,
           width: "100%",
           height: "100%",
           objectFit: "cover",
@@ -577,7 +579,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="device-screen" style={{ minHeight: 200, width: "100%" }}>
+              <div className="device-screen" style={{ width: "100%" }}>
                 <GameFeed videoSrc="https://github.com/FixdIt0/slither-neuron-dashboard/releases/download/v1.0/gameplay.mp4" onTimeUpdate={handleTime} />
               </div>
 
