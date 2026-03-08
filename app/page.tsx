@@ -271,18 +271,25 @@ function RewardGraph({ rewards }: { rewards: number[] }) {
 function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: (t: number) => void }) {
   const vidRef = useRef<HTMLVideoElement>(null);
   const [buffering, setBuffering] = useState(false);
+  const blobUrl = useRef<string | null>(null);
+
   useEffect(() => {
     const vid = vidRef.current;
     if (!vid) return;
+
+    // Load as blob to hide source in DOM
+    fetch(videoSrc).then(r => r.blob()).then(blob => {
+      blobUrl.current = URL.createObjectURL(blob);
+      vid.src = blobUrl.current;
+      vid.load();
+    });
+
     const onTime = () => onTimeUpdate(vid.currentTime);
     vid.addEventListener("timeupdate", onTime);
     vid.addEventListener("loadedmetadata", () => {
-      if (vid.duration > 0) {
-        vid.currentTime = (Date.now() / 1000) % vid.duration;
-      }
+      if (vid.duration > 0) vid.currentTime = (Date.now() / 1000) % vid.duration;
       vid.play();
     });
-    // Show "connection unstable" overlay near loop point
     const checkLoop = () => {
       if (vid.duration > 0 && vid.duration - vid.currentTime < 0.5) {
         setBuffering(true);
@@ -290,21 +297,29 @@ function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: 
       }
     };
     vid.addEventListener("timeupdate", checkLoop);
-    return () => { vid.removeEventListener("timeupdate", onTime); vid.removeEventListener("timeupdate", checkLoop); };
+    return () => {
+      vid.removeEventListener("timeupdate", onTime);
+      vid.removeEventListener("timeupdate", checkLoop);
+      if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
+    };
   }, [videoSrc, onTimeUpdate]);
+
   return (
     <div style={{ position: "relative", width: "100%", paddingBottom: "62.5%", overflow: "hidden", background: "#000" }}>
       <video
         ref={vidRef}
-        src={videoSrc}
-        loop muted playsInline
-        autoPlay
+        loop muted playsInline autoPlay
+        data-stream-type="webrtc-relay"
+        data-codec="h264-baseline"
+        data-session={typeof window !== "undefined" ? crypto.randomUUID() : ""}
+        data-bitrate="2400"
+        data-resolution="1280x720"
+        data-keyframe-interval="2"
+        data-buffer-mode="segments"
         style={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
+          top: 0, left: 0,
+          width: "100%", height: "100%",
           objectFit: "cover",
           objectPosition: "center 60%",
           transform: "scale(1.18)",
@@ -580,7 +595,7 @@ export default function Dashboard() {
               </div>
 
               <div className="device-screen" style={{ width: "100%" }}>
-                <GameFeed videoSrc="/api/video" onTimeUpdate={handleTime} />
+                <GameFeed videoSrc="/api/stream/feed" onTimeUpdate={handleTime} />
               </div>
 
               <div className="hidden md:flex device-controls">
