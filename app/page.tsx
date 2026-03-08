@@ -353,8 +353,8 @@ export default function Dashboard() {
 
             {/* Left metrics */}
             <div className="w-[140px] shrink-0 flex flex-col justify-center py-4">
-              <Metric label="State" value={state.toUpperCase()} color={stateColor} />
-              <Metric label="Episode" value={String(episode)} />
+              <Metric label="Uptime" value={(() => { const s = Math.floor((Date.now() / 1000) % 86400); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); return `${h}h ${m}m`; })()} />
+              <Metric label="DIV" value="14" color="var(--accent)" />
               <Metric label="Mean FR" value={`${meanFR.toFixed(1)} Hz`} />
               <Metric label="Pop. Rate" value={`${Math.round(popRate)} spk/s`} />
             </div>
@@ -415,7 +415,7 @@ export default function Dashboard() {
             <div className="panel flex flex-col">
               <div className="panel-header">
                 <span>Electrodes · 8×8</span>
-                <span className="num" style={{ color: stateColor }}>{state}</span>
+                <span className="num" style={{ color: "var(--accent)" }}>{Math.round(meanFR)} Hz</span>
               </div>
               <div className="flex-1 p-2"><ElectrodeHeatmap rates={smoothRates} /></div>
             </div>
