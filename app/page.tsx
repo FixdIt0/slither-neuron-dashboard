@@ -467,6 +467,19 @@ export default function Dashboard() {
                 CL1 hardware provided by Cortical Labs. 64-channel MEA, 20 kHz sampling rate, biphasic stimulation at 0.5–2.5 uA. Culture: human iPSC-derived cortical neurons, ~14 days in vitro.
               </p>
             </div>
+
+            <div className="flex items-center justify-center gap-6 mt-8">
+              <a href="https://github.com/FixdIt0/slither-neuron" target="_blank" rel="noopener"
+                className="text-[11px] uppercase tracking-[0.15em] px-5 py-2.5 border rounded-sm transition-colors"
+                style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>
+                View the Source Code
+              </a>
+              <a href="https://axiom.trade" target="_blank" rel="noopener"
+                className="text-[11px] uppercase tracking-[0.15em] px-5 py-2.5 border rounded-sm transition-colors"
+                style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>
+                Support us on Solana · CA: TBA
+              </a>
+            </div>
           </div>
 
         </div>
