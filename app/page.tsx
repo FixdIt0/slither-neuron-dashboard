@@ -170,27 +170,30 @@ function RewardGraph({ rewards }: { rewards: number[] }) {
 /* ═══ VIDEO CANVAS ═══ */
 function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: (t: number) => void }) {
   const vidRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    const vid = vidRef.current, canvas = canvasRef.current;
-    if (!vid || !canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    let raf: number;
-    const draw = () => {
-      if (vid.readyState >= 2) {
-        canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
-        ctx.drawImage(vid, 0, 0);
-        onTimeUpdate(vid.currentTime);
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    vid.addEventListener("canplay", () => { vid.play(); draw(); });
-    return () => cancelAnimationFrame(raf);
+    const vid = vidRef.current;
+    if (!vid) return;
+    const onTime = () => onTimeUpdate(vid.currentTime);
+    vid.addEventListener("timeupdate", onTime);
+    vid.addEventListener("canplay", () => { vid.play(); });
+    return () => vid.removeEventListener("timeupdate", onTime);
   }, [videoSrc, onTimeUpdate]);
   return (
-    <div className="relative w-full h-full">
-      <video ref={vidRef} src={videoSrc} loop muted playsInline className="hidden" />
-      <canvas ref={canvasRef} className="w-full h-full object-contain" />
+    <div className="relative w-full h-full overflow-hidden">
+      <video
+        ref={vidRef}
+        src={videoSrc}
+        loop muted playsInline
+        className="absolute"
+        style={{
+          /* Zoom in ~15% to crop out the chrome tab bar at top */
+          top: "-12%",
+          left: "-4%",
+          width: "108%",
+          height: "124%",
+          objectFit: "cover",
+        }}
+      />
     </div>
   );
 }
