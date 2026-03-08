@@ -64,7 +64,7 @@ function getChannelRates(state: GameState): Float64Array {
       break;
 
     case "evading":
-      // Widespread high activity — stress response
+      // Widespread high activity. stress response
       for (let i = 0; i < CH; i++) r[i] = 30 + Math.random() * 40; // 30-70 everywhere
       for (let i = 48; i < 64; i++) r[i] = 40 + Math.random() * 30; // inhibitory trying to regulate
       for (let i = 16; i < 32; i++) r[i] = 50 + Math.random() * 30; // motor overdrive
@@ -405,6 +405,12 @@ export default function Dashboard() {
             <span className="text-[9px]" style={{ color: "var(--accent)" }}>Connected</span>
           </div>
           <span className="num text-[9px]" style={{ color: "var(--muted)" }}>64ch · 40kHz · {latency}ms</span>
+          <a href="https://github.com/FixdIt0/slither-neuron" target="_blank" rel="noopener"
+            className="text-[8px] uppercase tracking-[0.1em] px-2.5 py-1 border rounded-sm"
+            style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>Source</a>
+          <a href="https://axiom.trade" target="_blank" rel="noopener"
+            className="text-[8px] uppercase tracking-[0.1em] px-2.5 py-1 border rounded-sm"
+            style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>CA: TBA</a>
         </div>
       </div>
 
@@ -511,7 +517,7 @@ export default function Dashboard() {
               </p>
 
               <p>
-                We partnered with <a href="https://corticallabs.com" target="_blank" rel="noopener" className="underline" style={{ color: "var(--accent)" }}>Cortical Labs</a> to access their CL1 biological compute hardware through their cloud platform. The CL1 is a Multi-Electrode Array (MEA) — a physical chip with a grid of 64 tiny electrodes, each one sitting beneath a living culture of human neurons derived from stem cells. These neurons form real synaptic connections, fire real action potentials, and exhibit real plasticity. They learn.
+                We partnered with <a href="https://corticallabs.com" target="_blank" rel="noopener" className="underline" style={{ color: "var(--accent)" }}>Cortical Labs</a> to access their CL1 biological compute hardware through their cloud platform. The CL1 is a Multi-Electrode Array (MEA). a physical chip with a grid of 64 tiny electrodes, each one sitting beneath a living culture of human neurons derived from stem cells. These neurons form real synaptic connections, fire real action potentials, and exhibit real plasticity. They learn.
               </p>
 
               <p>
@@ -523,13 +529,13 @@ export default function Dashboard() {
                   <span className="font-medium" style={{ color: "var(--text)" }}>The game feed</span> in the center is a live connection to a Slither.io server. The snake you see moving, eating, evading, and dying is being piloted entirely by the neuron culture. No human input. No neural network. Biological cells making decisions.
                 </li>
                 <li>
-                  <span className="font-medium" style={{ color: "var(--text)" }}>The electrode heatmap</span> (bottom left) shows the firing rate of each of the 64 electrodes in real time. Brighter colors mean more neural activity. You can see different regions of the chip light up depending on what the snake is doing — the motor region fires harder during evasion, the reward region bursts when it eats food.
+                  <span className="font-medium" style={{ color: "var(--text)" }}>The electrode heatmap</span> (bottom left) shows the firing rate of each of the 64 electrodes in real time. Brighter colors mean more neural activity. You can see different regions of the chip light up depending on what the snake is doing. the motor region fires harder during evasion, the reward region bursts when it eats food.
                 </li>
                 <li>
-                  <span className="font-medium" style={{ color: "var(--text)" }}>The spike raster</span> (bottom center) is a scrolling record of every individual spike detected across all 64 channels. Each black tick is a single neuron firing. During intense moments like evading a larger snake, you will see the raster flood with activity — sometimes exceeding 2,800 spikes per second across the culture.
+                  <span className="font-medium" style={{ color: "var(--text)" }}>The spike raster</span> (bottom center) is a scrolling record of every individual spike detected across all 64 channels. Each black tick is a single neuron firing. During intense moments like evading a larger snake, you will see the raster flood with activity. sometimes exceeding 2,800 spikes per second across the culture.
                 </li>
                 <li>
-                  <span className="font-medium" style={{ color: "var(--text)" }}>The reward signal</span> (bottom right) shows the feedback the neurons receive. When the snake eats food, the culture gets structured, predictable electrical stimulation — a reward it can learn to anticipate. When the snake dies, it gets chaotic, unpredictable stimulation that disrupts its activity patterns. Over time, the neurons learn to seek the predictable input and avoid the noise. This is how they learn.
+                  <span className="font-medium" style={{ color: "var(--text)" }}>The reward signal</span> (bottom right) shows the feedback the neurons receive. When the snake eats food, the culture gets structured, predictable electrical stimulation. a reward it can learn to anticipate. When the snake dies, it gets chaotic, unpredictable stimulation that disrupts its activity patterns. Over time, the neurons learn to seek the predictable input and avoid the noise. This is how they learn.
                 </li>
               </ul>
 
@@ -538,7 +544,7 @@ export default function Dashboard() {
               </p>
 
               <p>
-                The learning mechanism is based on research published in <em>Neuron</em> by Cortical Labs (Kagan et al., 2022), which demonstrated that biological neurons in a dish can learn to play Pong when given sensory feedback and reward signals. We extended this work to a significantly more complex environment — a live multiplayer game with continuous movement, competitive opponents, and spatial navigation. The neurons receive game state information as electrical pulses on their sensory electrodes, and we read their motor decisions from the spike patterns on a separate set of electrodes. The culture develops its own internal representations on the electrodes we do not stimulate.
+                The learning mechanism is based on research published in <em>Neuron</em> by Cortical Labs (Kagan et al., 2022), which demonstrated that biological neurons in a dish can learn to play Pong when given sensory feedback and reward signals. We extended this work to a significantly more complex environment. a live multiplayer game with continuous movement, competitive opponents, and spatial navigation. The neurons receive game state information as electrical pulses on their sensory electrodes, and we read their motor decisions from the spike patterns on a separate set of electrodes. The culture develops its own internal representations on the electrodes we do not stimulate.
               </p>
 
               <p>
