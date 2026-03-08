@@ -533,13 +533,13 @@ export default function Dashboard() {
             </div>
 
             {/* THE DEVICE */}
-            <div className="device device-screws-bottom relative w-full md:w-[560px] order-1 md:order-2">
-              <div className="device-label">
+            <div className="device device-screws-bottom relative w-full max-w-[560px] mx-auto order-1 md:order-2">
+              <div className="hidden md:block device-label">
                 <div className="device-label-plate"><span>Cortical Labs</span></div>
                 <div className="device-model">CL1-MEA · 64ch Biological Compute Unit</div>
               </div>
 
-              <div className="flex items-center justify-between px-2 mb-3">
+              <div className="hidden md:flex items-center justify-between px-2 mb-3">
                 {["Power","Link","Stim"].map(l => (
                   <div key={l} className="flex items-center gap-2">
                     <span className="led on" />
@@ -557,7 +557,7 @@ export default function Dashboard() {
                 <GameFeed videoSrc="https://github.com/FixdIt0/slither-neuron-dashboard/releases/download/v1.0/gameplay.mp4" onTimeUpdate={handleTime} />
               </div>
 
-              <div className="device-controls">
+              <div className="hidden md:flex device-controls">
                 <div className="vent">
                   {[0,1,2,3,4].map(i => <div key={i} className="vent-slit" />)}
                 </div>
