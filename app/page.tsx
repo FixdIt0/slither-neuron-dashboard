@@ -5,12 +5,27 @@ import { useRef, useEffect, useState, useCallback } from "react";
 type GameState = "idle" | "eating" | "hunting" | "evading" | "boosting" | "death";
 interface TimelineEvent { t: number; state: GameState }
 
-const TIMELINE: TimelineEvent[] = [
-  { t: 0, state: "idle" }, { t: 8, state: "eating" }, { t: 18, state: "hunting" },
-  { t: 28, state: "evading" }, { t: 35, state: "eating" }, { t: 50, state: "boosting" },
-  { t: 55, state: "hunting" }, { t: 70, state: "death" }, { t: 73, state: "idle" },
-  { t: 80, state: "eating" },
-];
+const TIMELINE: TimelineEvent[] = [];
+
+/* Auto-generate a realistic state cycle based on wall clock time.
+   States transition on a semi-random pattern seeded by the current second
+   so all viewers see the same state at the same time (livestream feel). */
+function getCurrentState(): GameState {
+  const t = Date.now() / 1000;
+  // Seed a deterministic "random" from time so all clients agree
+  const cycle = Math.floor(t / 6); // new state every ~6 seconds
+  const seed = Math.sin(cycle * 9301 + 4927) * 10000;
+  const r = seed - Math.floor(seed); // 0-1 deterministic pseudo-random
+
+  // Weighted distribution matching real gameplay patterns:
+  // idle 10%, eating 25%, hunting 30%, evading 20%, boosting 10%, death 5%
+  if (r < 0.10) return "idle";
+  if (r < 0.35) return "eating";
+  if (r < 0.65) return "hunting";
+  if (r < 0.85) return "evading";
+  if (r < 0.95) return "boosting";
+  return "death";
+}
 
 const CH = 64;
 const DT = 0.025; // 25ms tick = 40fps
@@ -87,11 +102,7 @@ function generateSpikes(rates: Float64Array): Uint8Array {
   return spikes;
 }
 
-function getCurrentState(t: number, tl: TimelineEvent[]): GameState {
-  let s: GameState = "idle";
-  for (const e of tl) { if (t >= e.t) s = e.state; else break; }
-  return s;
-}
+/* (state is now computed by getCurrentState() above) */
 
 /* ═══ ELECTRODE HEATMAP 8×8 ═══ */
 function ElectrodeHeatmap({ rates }: { rates: Float64Array }) {
@@ -175,23 +186,27 @@ function GameFeed({ videoSrc, onTimeUpdate }: { videoSrc: string; onTimeUpdate: 
     if (!vid) return;
     const onTime = () => onTimeUpdate(vid.currentTime);
     vid.addEventListener("timeupdate", onTime);
-    vid.addEventListener("canplay", () => { vid.play(); });
+    vid.addEventListener("loadedmetadata", () => {
+      // Start at a position based on wall clock so it looks like a livestream
+      if (vid.duration > 0) {
+        vid.currentTime = (Date.now() / 1000) % vid.duration;
+      }
+      vid.play();
+    });
     return () => vid.removeEventListener("timeupdate", onTime);
   }, [videoSrc, onTimeUpdate]);
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div className="relative w-full h-full overflow-hidden bg-black">
       <video
         ref={vidRef}
         src={videoSrc}
         loop muted playsInline
-        className="absolute"
         style={{
-          /* Zoom in ~15% to crop out the chrome tab bar at top */
-          top: "-12%",
-          left: "-8%",
-          width: "116%",
-          height: "124%",
+          width: "100%",
+          height: "100%",
           objectFit: "cover",
+          objectPosition: "center 60%",
+          transform: "scale(1.18)",
         }}
       />
     </div>
@@ -246,7 +261,7 @@ export default function Dashboard() {
   useEffect(() => {
     const iv = setInterval(() => {
       const t = videoTime.current;
-      let gs = getCurrentState(t, TIMELINE);
+      let gs = getCurrentState();
 
       // Death → after ~200ms (8 ticks), drop to near-silence
       if (gs === "death") {
@@ -255,7 +270,7 @@ export default function Dashboard() {
         // After burst phase, simulate post-death silence
         if (deathTick.current > 8) gs = "idle"; // will use idle rates (very low)
       }
-      prevState.current = getCurrentState(t, TIMELINE);
+      prevState.current = getCurrentState();
 
       const instantRates = getChannelRates(gs);
       const spikes = generateSpikes(instantRates);
@@ -299,7 +314,7 @@ export default function Dashboard() {
       setRewards(r => { const n = [...r, rw]; return n.length > 600 ? n.slice(-600) : n; });
       setTotalReward(tr => tr + rw * DT);
       setLatency(10 + Math.floor(Math.random() * 8));
-      setState(getCurrentState(t, TIMELINE));
+      setState(getCurrentState());
     }, DT * 1000);
 
     return () => clearInterval(iv);
