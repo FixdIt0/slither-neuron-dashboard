@@ -5,26 +5,107 @@ import { useRef, useEffect, useState, useCallback } from "react";
 type GameState = "idle" | "eating" | "hunting" | "evading" | "boosting" | "death";
 interface TimelineEvent { t: number; state: GameState }
 
-const TIMELINE: TimelineEvent[] = [];
+const VIDEO_DURATION = 450; // 7:30 loop
 
-/* Auto-generate a realistic state cycle based on wall clock time.
-   States transition on a semi-random pattern seeded by the current second
-   so all viewers see the same state at the same time (livestream feel). */
-function getCurrentState(): GameState {
-  const t = Date.now() / 1000;
-  // Seed a deterministic "random" from time so all clients agree
-  const cycle = Math.floor(t / 6); // new state every ~6 seconds
-  const seed = Math.sin(cycle * 9301 + 4927) * 10000;
-  const r = seed - Math.floor(seed); // 0-1 deterministic pseudo-random
+const TIMELINE: TimelineEvent[] = [
+  { t: 0, state: "idle" },
+  { t: 1, state: "eating" },
+  { t: 7, state: "evading" },
+  { t: 10, state: "eating" },
+  { t: 19, state: "eating" },
+  { t: 20, state: "boosting" },
+  { t: 22, state: "death" },
+  { t: 25, state: "eating" },
+  { t: 29, state: "boosting" },
+  { t: 31, state: "death" },
+  { t: 34, state: "idle" },
+  { t: 40, state: "eating" },
+  { t: 48, state: "idle" },
+  { t: 54, state: "hunting" },
+  { t: 56, state: "hunting" },
+  { t: 58, state: "eating" },
+  { t: 65, state: "idle" },
+  { t: 70, state: "eating" },
+  { t: 78, state: "idle" },
+  { t: 82, state: "evading" },
+  { t: 84, state: "evading" },
+  { t: 86, state: "hunting" },
+  { t: 88, state: "hunting" },
+  { t: 90, state: "eating" },
+  { t: 95, state: "idle" },
+  { t: 105, state: "eating" },
+  { t: 115, state: "idle" },
+  { t: 119, state: "hunting" },
+  { t: 121, state: "hunting" },
+  { t: 123, state: "eating" },
+  { t: 130, state: "idle" },
+  { t: 136, state: "evading" },
+  { t: 138, state: "death" },
+  { t: 141, state: "idle" },
+  { t: 155, state: "eating" },
+  { t: 165, state: "idle" },
+  { t: 170, state: "hunting" },
+  { t: 172, state: "hunting" },
+  { t: 174, state: "eating" },
+  { t: 179, state: "eating" },
+  { t: 180, state: "hunting" },
+  { t: 181, state: "hunting" },
+  { t: 183, state: "eating" },
+  { t: 190, state: "idle" },
+  { t: 198, state: "evading" },
+  { t: 200, state: "death" },
+  { t: 203, state: "idle" },
+  { t: 215, state: "eating" },
+  { t: 221, state: "boosting" },
+  { t: 223, state: "hunting" },
+  { t: 230, state: "eating" },
+  { t: 235, state: "eating" },
+  { t: 237, state: "evading" },
+  { t: 238, state: "death" },
+  { t: 241, state: "idle" },
+  { t: 260, state: "eating" },
+  { t: 275, state: "idle" },
+  { t: 283, state: "hunting" },
+  { t: 285, state: "hunting" },
+  { t: 287, state: "eating" },
+  { t: 295, state: "idle" },
+  { t: 310, state: "boosting" },
+  { t: 314, state: "eating" },
+  { t: 320, state: "idle" },
+  { t: 323, state: "hunting" },
+  { t: 325, state: "hunting" },
+  { t: 327, state: "eating" },
+  { t: 331, state: "eating" },
+  { t: 333, state: "evading" },
+  { t: 334, state: "death" },
+  { t: 337, state: "idle" },
+  { t: 345, state: "eating" },
+  { t: 349, state: "idle" },
+  { t: 351, state: "eating" },
+  { t: 355, state: "hunting" },
+  { t: 357, state: "hunting" },
+  { t: 360, state: "hunting" },
+  { t: 362, state: "eating" },
+  { t: 368, state: "hunting" },
+  { t: 371, state: "hunting" },
+  { t: 373, state: "eating" },
+  { t: 378, state: "evading" },
+  { t: 380, state: "death" },
+  { t: 383, state: "idle" },
+  { t: 400, state: "eating" },
+  { t: 420, state: "idle" },
+  { t: 446, state: "evading" },
+  { t: 448, state: "death" },
+];
 
-  // Weighted distribution matching real gameplay patterns:
-  // idle 10%, eating 25%, hunting 30%, evading 20%, boosting 10%, death 5%
-  if (r < 0.10) return "idle";
-  if (r < 0.35) return "eating";
-  if (r < 0.65) return "hunting";
-  if (r < 0.85) return "evading";
-  if (r < 0.95) return "boosting";
-  return "death";
+/* Get state for a given video time (modular, loops every 450s) */
+function getStateAtTime(videoTime: number): GameState {
+  const t = ((videoTime % VIDEO_DURATION) + VIDEO_DURATION) % VIDEO_DURATION;
+  let state: GameState = "idle";
+  for (const e of TIMELINE) {
+    if (t >= e.t) state = e.state; else break;
+  }
+  return state;
 }
 
 const CH = 64;
@@ -251,17 +332,10 @@ function seededRandom(tick: number, channel: number): number {
   return mulberry32(tick * 64 + channel);
 }
 
-/* Get state for a given tick (deterministic) */
+/* Get state for a given tick (deterministic, synced to video loop) */
 function getStateForTick(tick: number): GameState {
-  const cycle = Math.floor(tick / 240); // new state every ~6s (240 ticks at 40fps)
-  const seed = Math.sin(cycle * 9301 + 4927) * 10000;
-  const r = seed - Math.floor(seed);
-  if (r < 0.10) return "idle";
-  if (r < 0.35) return "eating";
-  if (r < 0.65) return "hunting";
-  if (r < 0.85) return "evading";
-  if (r < 0.95) return "boosting";
-  return "death";
+  const videoTime = (tick * DT) % VIDEO_DURATION;
+  return getStateAtTime(videoTime);
 }
 
 /* Generate deterministic spikes for a tick */
