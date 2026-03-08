@@ -553,6 +553,9 @@ export default function Dashboard() {
           <a href="https://github.com/MoonBagDexter/slither-neuron" target="_blank" rel="noopener"
             className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
             style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>Source</a>
+          <a href="https://x.com/SlitherNeuron" target="_blank" rel="noopener"
+            className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
+            style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>𝕏</a>
           <a href="https://axiom.trade" target="_blank" rel="noopener"
             className="text-[7px] md:text-[8px] uppercase tracking-[0.1em] px-2 py-1 border rounded-sm"
             style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>CA: TBA</a>
@@ -700,11 +703,16 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-6 mt-8">
+            <div className="flex items-center justify-center gap-4 md:gap-6 mt-8 flex-wrap">
               <a href="https://github.com/MoonBagDexter/slither-neuron" target="_blank" rel="noopener"
                 className="text-[11px] uppercase tracking-[0.15em] px-5 py-2.5 border rounded-sm transition-colors"
                 style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>
-                View the Source Code
+                View Source Code
+              </a>
+              <a href="https://x.com/SlitherNeuron" target="_blank" rel="noopener"
+                className="text-[11px] uppercase tracking-[0.15em] px-5 py-2.5 border rounded-sm transition-colors"
+                style={{ color: "var(--text-secondary)", borderColor: "var(--border-strong)" }}>
+                Follow on 𝕏
               </a>
               <a href="https://axiom.trade" target="_blank" rel="noopener"
                 className="text-[11px] uppercase tracking-[0.15em] px-5 py-2.5 border rounded-sm transition-colors"
