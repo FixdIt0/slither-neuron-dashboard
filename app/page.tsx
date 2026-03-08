@@ -363,7 +363,7 @@ export default function Dashboard() {
 
               <div className="device-screen" style={{ aspectRatio: "16/10" }}>
                 <ScreenGrid />
-                <GameFeed videoSrc="/gameplay.mp4" onTimeUpdate={handleTime} />
+                <GameFeed videoSrc="https://github.com/FixdIt0/slither-neuron-dashboard/releases/download/v1.0/gameplay.mp4" onTimeUpdate={handleTime} />
               </div>
 
               <div className="device-controls">
